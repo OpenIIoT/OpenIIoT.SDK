@@ -72,6 +72,21 @@ namespace OpenIIoT.SDK.Package.Packaging
         /// </summary>
         public const string KeyUrlPlaceholder = "$";
 
+        /// <summary>
+        ///     The standard name of Package manifest files.
+        /// </summary>
+        public const string ManifestFilename = "manifest.json";
+
+        /// <summary>
+        ///     The standard name of compressed Package payloads.
+        /// </summary>
+        public const string PayloadArchiveName = "files.zip";
+
+        /// <summary>
+        ///     The standard name of Package payload directories.
+        /// </summary>
+        public const string PayloadDirectoryName = "files";
+
         #endregion Public Fields
     }
 }
