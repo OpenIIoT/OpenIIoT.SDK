@@ -54,6 +54,25 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// </summary>
     public static class PackageTruster
     {
+        #region Private Fields
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
+        /// </summary>
+        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
+        /// </summary>
+        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
+        /// </summary>
+        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
+
+        #endregion Private Fields
+
         #region Public Events
 
         /// <summary>
@@ -77,30 +96,30 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             ArgumentValidator.ValidatePackageFileArgumentForWriting(packageFile, true);
             ArgumentValidator.ValidatePrivateKeyArguments(privateKeyFile, passphrase);
 
-            OnUpdated($"Adding Trust to Package '{Path.GetFileName(packageFile)}'...");
+            Info($"Adding Trust to Package '{Path.GetFileName(packageFile)}'...");
 
             PackageManifest manifest = ManifestExtractor.ExtractManifest(packageFile);
 
-            OnUpdated("Checking Digest...");
+            Verbose("Checking (but not validating) Digest...");
 
             if (string.IsNullOrEmpty(manifest.Signature.Digest))
             {
                 throw new InvalidOperationException("The Package is not signed and can not be trusted.");
             }
 
-            OnUpdated(" √ Digest OK.");
+            Verbose("Digest OK.");
 
-            OnUpdated("Signing Digest to create the Trust...");
+            Verbose("Signing Digest to create the Trust...");
             string privateKey = File.ReadAllText(privateKeyFile);
             byte[] digestBytes = Encoding.ASCII.GetBytes(manifest.Signature.Digest);
             byte[] trustBytes = PGPSignature.Sign(digestBytes, privateKey, passphrase);
             string trust = Encoding.ASCII.GetString(trustBytes);
-            OnUpdated(" √ Trust created successfully.");
+            Verbose("Trust created successfully.");
 
             manifest.Signature.Trust = trust;
 
             UpdatePackageManifest(packageFile, manifest);
-            OnUpdated($" √ Trust added to Package '{Path.GetFileName(packageFile)}' successfully.");
+            Success($"Trust added to Package '{Path.GetFileName(packageFile)}' successfully.");
         }
 
         #endregion Public Methods
@@ -111,11 +130,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         ///     Raises the <see cref="Updated"/> event with the specified message.
         /// </summary>
         /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
+        private static void OnUpdated(PackagingUpdateType type, string message)
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.Trust, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
             }
         }
 
@@ -126,44 +145,51 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="manifest">The Manifest with which the Package file will be updated.</param>
         private static void UpdatePackageManifest(string packageFile, PackageManifest manifest)
         {
+            Exception deferredException = default(Exception);
+
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
             string tempFile = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
 
-            OnUpdated($"Updating Manifest in Package '{Path.GetFileName(packageFile)}'...");
+            Verbose($"Updating Manifest in Package '{Path.GetFileName(packageFile)}'...");
 
             try
             {
-                OnUpdated($"Writing Manifest to temp file '{tempFile}'...");
+                Verbose($"Writing Manifest to temp file '{tempFile}'...");
                 Directory.CreateDirectory(tempDirectory);
                 File.WriteAllText(tempFile, manifest.ToJson());
-                OnUpdated(" √ Manifest file written successfully.");
+                Verbose("Manifest file written successfully.");
 
-                OnUpdated($"Opening Package file '{Path.GetFileName(packageFile)}'...");
+                Verbose($"Opening Package file '{Path.GetFileName(packageFile)}'...");
                 ZipArchive package = ZipFile.Open(packageFile, ZipArchiveMode.Update);
-                OnUpdated(" √ Package file opened successfully.");
+                Verbose("Package file opened successfully.");
 
-                OnUpdated("Deleting existing Manifest file...");
+                Verbose("Deleting existing Manifest file...");
                 package.GetEntry(Package.Constants.ManifestFilename).Delete();
-                OnUpdated(" √ Deleted existing Manifest file successfully.");
+                Verbose("Deleted existing Manifest file successfully.");
 
-                OnUpdated("Adding updated Manfiest file...");
+                Verbose("Adding updated Manfiest file...");
                 package.CreateEntryFromFile(tempFile, Package.Constants.ManifestFilename);
-                OnUpdated(" √ Manifest updated successfully.");
+                Verbose("Manifest updated successfully.");
 
-                OnUpdated("Saving Package...");
+                Verbose("Saving Package...");
                 package.Dispose();
-                OnUpdated(" √ Package saved successfully.");
+                Verbose("Package saved successfully.");
             }
             catch (Exception ex)
             {
-                OnUpdated($"Error updating Manifest in Package '{Path.GetFileName(packageFile)}: {ex.Message}'");
+                deferredException = new Exception($"Error updating Manifest in Package '{Path.GetFileName(packageFile)}: {ex.Message}'");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose("Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 

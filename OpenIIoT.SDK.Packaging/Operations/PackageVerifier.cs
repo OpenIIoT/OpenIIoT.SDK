@@ -13,6 +13,25 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 {
     public static class PackageVerifier
     {
+        #region Private Fields
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
+        /// </summary>
+        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
+        /// </summary>
+        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
+        /// </summary>
+        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
+
+        #endregion Private Fields
+
         #region Public Events
 
         public static event EventHandler<PackagingUpdateEventArgs> Updated;
@@ -23,16 +42,18 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
         public static void VerifyPackage(string packageFile)
         {
+            Exception deferredException = default(Exception);
+
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
 
             try
             {
-                OnUpdated($"Extracting package '{Path.GetFileName(packageFile)}' to temp directory '{tempDirectory}'");
+                Verbose($"Extracting package '{Path.GetFileName(packageFile)}' to temp directory '{tempDirectory}'");
                 ZipFile.ExtractToDirectory(packageFile, tempDirectory);
-                OnUpdated(" √ Package extracted successfully.");
+                Verbose("Package extracted successfully.");
 
-                OnUpdated("Checking extracted files...");
+                Verbose("Checking extracted files...");
 
                 string manifestFilename = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
                 if (!File.Exists(manifestFilename))
@@ -46,13 +67,13 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                     throw new FileNotFoundException("it does not contain a payload archive.");
                 }
 
-                OnUpdated(" √ Manifest and Payload Archive extracted successfully.");
-                OnUpdated("Extracting Payload Archive...");
+                Verbose("Manifest and Payload Archive extracted successfully.");
+                Verbose("Extracting Payload Archive...");
 
                 ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName));
 
-                OnUpdated(" √ Payload Archive extracted successfully.");
-                OnUpdated("Checking extracted files...");
+                Verbose("Payload Archive extracted successfully.");
+                Verbose("Checking extracted files...");
 
                 string payloadDirectory = Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName);
 
@@ -61,15 +82,15 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                     throw new FileNotFoundException("the payload directory does not contain any files.");
                 }
 
-                OnUpdated(" √ Extracted files validated successfully.");
+                Verbose("Extracted files validated successfully.");
 
-                OnUpdated($"Fetching manifest from '{manifestFilename}'...");
+                Verbose($"Fetching manifest from '{manifestFilename}'...");
                 PackageManifest manifest = ReadManifest(manifestFilename);
-                OnUpdated(" √ Manifest fetched successfully.");
+                Verbose("Manifest fetched successfully.");
 
                 if (!string.IsNullOrEmpty(manifest.Signature.Trust))
                 {
-                    OnUpdated("Verifying the Manifest Trust...");
+                    Verbose("Verifying the Manifest Trust...");
 
                     if (string.IsNullOrEmpty(manifest.Signature.Digest))
                     {
@@ -99,7 +120,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                         throw new InvalidDataException("the manifest trust is not valid.");
                     }
 
-                    OnUpdated(" √ Trust verified successfully.");
+                    Verbose("Trust verified successfully.");
                 }
 
                 if (!string.IsNullOrEmpty(manifest.Signature.Digest))
@@ -109,13 +130,18 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
             catch (Exception ex)
             {
-                OnUpdated($"Package '{packageFile}' is invalid: {ex.Message}");
+                deferredException = new Exception($"Package '{packageFile}' is invalid: {ex.Message}");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose(" √ Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 
@@ -133,7 +159,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         {
             string url = Constants.KeyUrlBase.Replace(Constants.KeyUrlPlaceholder, username);
 
-            OnUpdated($"Fetching PGP key information from {url}...");
+            Verbose($"Fetching PGP key information from {url}...");
 
             try
             {
@@ -141,7 +167,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                 {
                     string content = client.DownloadString(url);
 
-                    OnUpdated($"Key information fetched.  Parsing primary public key...");
+                    Verbose($"Key information fetched.  Parsing primary public key...");
 
                     JObject key = JObject.Parse(content);
                     string publicKey = key["them"]["public_keys"]["primary"]["bundle"].ToString();
@@ -151,7 +177,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                         throw new InvalidDataException($"The length of the retrieved key was not long enough (expected: >= {Constants.KeyMinimumLength}, actual: {publicKey.Length}) to be a valid PGP public key.");
                     }
 
-                    OnUpdated($"Public key fetched successfully.");
+                    Verbose($"Public key fetched successfully.");
 
                     return publicKey;
                 }
@@ -162,11 +188,15 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
         }
 
-        private static void OnUpdated(string message)
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with the specified message.
+        /// </summary>
+        /// <param name="message">The message to send.</param>
+        private static void OnUpdated(PackagingUpdateType type, string message)
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.Verify, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
             }
         }
 

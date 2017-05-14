@@ -51,6 +51,25 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// </summary>
     public static class ManifestGenerator
     {
+        #region Private Fields
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
+        /// </summary>
+        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
+        /// </summary>
+        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
+        /// </summary>
+        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
+
+        #endregion Private Fields
+
         #region Public Events
 
         /// <summary>
@@ -79,9 +98,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             PackageManifestBuilder builder = new PackageManifestBuilder();
 
-            OnUpdated($"Generating manifest for directory '{inputDirectory}'...");
+            Info($"Generating manifest for directory '{inputDirectory}'...");
             builder.BuildDefault();
-            OnUpdated($"Adding files from '{inputDirectory}'...");
+            Verbose($"Adding files from '{inputDirectory}'...");
 
             foreach (string file in files)
             {
@@ -89,19 +108,19 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
 
             PackageManifest manifest = builder.Manifest;
-            OnUpdated(" √ Manifest generated.");
+            Success("Manifest generated successfully.");
 
             if (manifestFile != default(string))
             {
                 try
                 {
-                    OnUpdated($"Saving output to file '{manifestFile}'...");
+                    Info($"Saving output to file '{manifestFile}'...");
                     File.WriteAllText(manifestFile, manifest.ToJson());
-                    OnUpdated(" √ File saved successfully.");
+                    Success("File saved successfully.");
                 }
                 catch (Exception ex)
                 {
-                    OnUpdated($"Unable to write to output file '{manifestFile}': {ex.Message}");
+                    throw new Exception($"Unable to write to output file '{manifestFile}': {ex.Message}");
                 }
             }
 
@@ -127,7 +146,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             if (type == PackageManifestFileType.Binary || type == PackageManifestFileType.WebIndex || (type == PackageManifestFileType.Resource && includeResources))
             {
-                OnUpdated($"Adding file '{file}'...");
+                Verbose($"Adding file '{file}'...");
                 PackageManifestFile newFile = new PackageManifestFile();
 
                 newFile.Source = Common.Utility.GetRelativePath(directory, file);
@@ -141,7 +160,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
             else
             {
-                OnUpdated($"Skipping file '{file}...");
+                Verbose($"Skipping file '{file}...");
             }
         }
 
@@ -170,11 +189,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         ///     Raises the <see cref="Updated"/> event with the specified message.
         /// </summary>
         /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
+        private static void OnUpdated(PackagingUpdateType type, string message)
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.Manifest, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
             }
         }
 

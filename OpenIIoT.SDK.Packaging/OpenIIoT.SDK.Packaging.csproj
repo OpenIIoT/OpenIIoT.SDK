@@ -66,6 +66,7 @@
     <Compile Include="Operations\PackageExtractor.cs" />
     <Compile Include="Operations\PackageTruster.cs" />
     <Compile Include="Operations\PackageVerifier.cs" />
+    <Compile Include="PackagingUpdateType.cs" />
     <Compile Include="PackagingOperation.cs" />
     <Compile Include="PackagingUpdateEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

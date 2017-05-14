@@ -50,6 +50,25 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// </summary>
     public static class PackageExtractor
     {
+        #region Private Fields
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
+        /// </summary>
+        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
+        /// </summary>
+        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
+        /// </summary>
+        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
+
+        #endregion Private Fields
+
         #region Public Events
 
         /// <summary>
@@ -74,7 +93,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
             ArgumentValidator.ValidateOutputDirectoryArgument(outputDirectory, overwrite);
 
-            OnUpdated($"Extracting package '{Path.GetFileName(packageFile)}' to directory '{outputDirectory}'...");
+            Exception deferredException = default(Exception);
+
+            Info($"Extracting package '{Path.GetFileName(packageFile)}' to directory '{outputDirectory}'...");
 
             if (!skipVerification)
             {
@@ -82,37 +103,42 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
             else
             {
-                OnUpdated("Package verification skipped.");
+                Info("Package verification skipped.");
             }
 
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
 
             try
             {
-                OnUpdated($"Extracting payload archive to '{tempDirectory}'...");
+                Verbose($"Extracting payload archive to '{tempDirectory}'...");
                 ZipFile.ExtractToDirectory(packageFile, tempDirectory);
-                OnUpdated(" √ Payload archive extracted successfully.");
+                Verbose("Payload archive extracted successfully.");
 
                 if (Directory.Exists(outputDirectory) && overwrite)
                 {
-                    OnUpdated($"Deleting existing output directory '{outputDirectory}'...");
+                    Verbose($"Deleting existing output directory '{outputDirectory}'...");
                     Directory.Delete(outputDirectory, true);
-                    OnUpdated(" √ Output directory deleted successfully.");
+                    Verbose(" √ Output directory deleted successfully.");
                 }
 
-                OnUpdated($"Extracting payload archive to destination '{outputDirectory}'...");
+                Verbose($"Extracting payload archive to destination '{outputDirectory}'...");
                 ZipFile.ExtractToDirectory(Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName), outputDirectory);
-                OnUpdated(" √ Package extracted successfully.");
+                Success("Package extracted successfully.");
             }
             catch (Exception ex)
             {
-                OnUpdated($"Error extracting Package: {ex.Message}");
+                deferredException = new Exception($"Error extracting Package: {ex.Message}");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose(" √ Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 
@@ -124,11 +150,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         ///     Raises the <see cref="Updated"/> event with the specified message.
         /// </summary>
         /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
+        private static void OnUpdated(PackagingUpdateType type, string message)
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
             }
         }
 

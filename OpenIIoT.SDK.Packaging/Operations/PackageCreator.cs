@@ -55,6 +55,25 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// </summary>
     public static class PackageCreator
     {
+        #region Private Fields
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
+        /// </summary>
+        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
+        /// </summary>
+        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
+
+        /// <summary>
+        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
+        /// </summary>
+        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
+
+        #endregion Private Fields
+
         #region Public Events
 
         /// <summary>
@@ -95,6 +114,8 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             ArgumentValidator.ValidateInputDirectoryArgument(inputDirectory);
             ArgumentValidator.ValidatePackageFileArgumentForWriting(packageFile);
 
+            Exception deferredException = default(Exception);
+
             if (signPackage)
             {
                 ArgumentValidator.ValidatePrivateKeyArguments(privateKeyFile, passphrase);
@@ -107,11 +128,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             PackageManifest manifest = ValidateManifestFileArgumentAndRetrieveManifest(manifestFile);
 
-            OnUpdated($"Creating package '{Path.GetFileName(packageFile)}' from directory '{inputDirectory}' using manifest file '{Path.GetFileName(manifestFile)}'...");
+            Info($"Creating package '{Path.GetFileName(packageFile)}' from directory '{inputDirectory}' using manifest file '{Path.GetFileName(manifestFile)}'...");
 
             if (signPackage)
             {
-                OnUpdated($"Package will be signed using PGP private key file '{Path.GetFileName(privateKeyFile)}' as keybase.io user '{keybaseUsername}'.");
+                Info($"Package will be signed using PGP private key file '{Path.GetFileName(privateKeyFile)}' as keybase.io user '{keybaseUsername}'.");
             }
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
@@ -122,29 +143,29 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             try
             {
-                OnUpdated($"Creating temporary directory '{tempDirectory}'...");
+                Verbose($"Creating temporary directory '{tempDirectory}'...");
                 Directory.CreateDirectory(tempDirectory);
-                OnUpdated(" √ Directory created.");
+                Verbose("Directory created.");
 
-                OnUpdated($"Copying input directory '{inputDirectory}' to '{payloadDirectory}'...");
+                Verbose($"Copying input directory '{inputDirectory}' to '{payloadDirectory}'...");
                 Microsoft.VisualBasic.FileIO.FileSystem.CopyDirectory(inputDirectory, payloadDirectory);
-                OnUpdated(" √ Directory copied successfully.");
+                Verbose("Directory copied successfully.");
 
-                OnUpdated($"Validating manifest '{manifestFile}' and generating SHA512 hashes...");
+                Verbose($"Validating manifest '{manifestFile}' and generating SHA512 hashes...");
                 ValidateManifestAndGenerateHashes(manifest, payloadDirectory);
-                OnUpdated(" √ Manifest validated and hashes written.");
+                Verbose("Manifest validated and hashes written.");
 
-                OnUpdated($"Compressing payload into '{payloadArchiveName}'...");
+                Verbose($"Compressing payload into '{payloadArchiveName}'...");
                 ZipFile.CreateFromDirectory(payloadDirectory, payloadArchiveName);
-                OnUpdated(" √ Successfully compressed payload.");
+                Verbose("Successfully compressed payload.");
 
-                OnUpdated($"Deleting temporary payload directory '{payloadDirectory}...");
+                Verbose($"Deleting temporary payload directory '{payloadDirectory}...");
                 Directory.Delete(payloadDirectory, true);
-                OnUpdated(" √ Successfully deleted temporary payload directory.");
+                Verbose("Successfully deleted temporary payload directory.");
 
-                OnUpdated("Updating manifest with SHA512 hash of payload archive...");
+                Verbose("Updating manifest with SHA512 hash of payload archive...");
                 manifest.Checksum = Common.Utility.ComputeFileSHA512Hash(payloadArchiveName);
-                OnUpdated($" √ Hash computed successfully: {manifest.Checksum}.");
+                Verbose($"Hash computed successfully: {manifest.Checksum}.");
 
                 if (signPackage)
                 {
@@ -154,28 +175,32 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                     }
                     catch (Exception ex)
                     {
-                        OnUpdated($"Error signing Package: {ex.GetType().Name}: {ex.Message}");
-                        throw;
+                        throw new Exception($"Error signing Package: {ex.GetType().Name}: {ex.Message}");
                     }
                 }
 
-                OnUpdated($"Writing manifest to 'manifest.json' in '{tempDirectory}'...");
+                Verbose($"Writing manifest to 'manifest.json' in '{tempDirectory}'...");
                 WriteManifest(manifest, tempDirectory);
-                OnUpdated(" √ Manifest written successfully.");
+                Verbose("Manifest written successfully.");
 
-                OnUpdated($"Packaging manifest and payload into '{packageFile}'...");
+                Verbose($"Packaging manifest and payload into '{packageFile}'...");
                 ZipFile.CreateFromDirectory(tempDirectory, packageFile);
-                OnUpdated(" √ Package created successfully!");
+                Success("Package created successfully.");
             }
             catch (Exception ex)
             {
-                OnUpdated($"Error creating Package: {ex.Message}");
+                deferredException = new Exception($"Error creating Package: {ex.Message}");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose("Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 
@@ -262,11 +287,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         ///     Raises the <see cref="Updated"/> event with the specified message.
         /// </summary>
         /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
+        private static void OnUpdated(PackagingUpdateType type, string message)
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.Package, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
             }
         }
 
@@ -282,7 +307,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <returns>The signed manifest.</returns>
         private static PackageManifest SignManifest(PackageManifest manifest, string privateKeyFile, string passphrase, string keybaseUsername)
         {
-            OnUpdated("Digitally signing manifest...");
+            Info("Digitally signing manifest...");
 
             // insert a signature into the manifest. the signer must be included in the hash to prevent tampering.
             PackageManifestSignature signature = new PackageManifestSignature();
@@ -290,22 +315,22 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             signature.Subject = keybaseUsername;
             manifest.Signature = signature;
 
-            OnUpdated("Creating SHA512 hash of serialized manifest...");
+            Verbose("Creating SHA512 hash of serialized manifest...");
             string manifestHash = Common.Utility.ComputeSHA512Hash(manifest.ToJson());
-            OnUpdated($" √ Hash computed successfully: {manifestHash}.");
+            Verbose($" √ Hash computed successfully: {manifestHash}.");
 
-            OnUpdated("Reading keys from disk...");
+            Verbose("Reading keys from disk...");
             string privateKey = File.ReadAllText(privateKeyFile);
-            OnUpdated(" √ Keys read successfully.");
+            Verbose(" √ Keys read successfully.");
 
             byte[] manifestBytes = Encoding.ASCII.GetBytes(manifest.ToJson());
-            OnUpdated("Creating digest...");
+            Verbose("Creating digest...");
             byte[] digestBytes = PGPSignature.Sign(manifestBytes, privateKey, passphrase);
-            OnUpdated(" √ Digest created successfully.");
+            Verbose(" √ Digest created successfully.");
 
-            OnUpdated("Adding signature to manifest...");
+            Verbose("Adding signature to manifest...");
             manifest.Signature.Digest = Encoding.ASCII.GetString(digestBytes);
-            OnUpdated(" √ Manifest signed successfully.");
+            Success("Manifest signed successfully.");
 
             return manifest;
         }
