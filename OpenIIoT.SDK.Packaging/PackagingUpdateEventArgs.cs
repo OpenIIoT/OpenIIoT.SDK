@@ -6,7 +6,7 @@ namespace OpenIIoT.SDK.Package.Packaging
     {
         #region Public Constructors
 
-        public PackagingUpdateEventArgs(PackagingOperation operation, PackagingUpdateType type, string message) : base()
+        public PackagingUpdateEventArgs(PackagingOperationType operation, PackagingUpdateType type, string message) : base()
         {
             Operation = operation;
             Type = type;
@@ -18,7 +18,7 @@ namespace OpenIIoT.SDK.Package.Packaging
         #region Public Properties
 
         public string Message { get; private set; }
-        public PackagingOperation Operation { get; private set; }
+        public PackagingOperationType Operation { get; private set; }
         public PackagingUpdateType Type { get; private set; }
 
         #endregion Public Properties

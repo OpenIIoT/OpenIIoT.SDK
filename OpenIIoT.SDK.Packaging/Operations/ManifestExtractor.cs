@@ -162,7 +162,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         {
             if (Updated != null)
             {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, type, message));
+                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
             }
         }
 

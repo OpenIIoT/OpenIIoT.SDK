@@ -1,6 +1,6 @@
 ﻿namespace OpenIIoT.SDK.Package.Packaging
 {
-    public enum PackagingOperation
+    public enum PackagingOperationType
     {
         Manifest,
         ManifestExtraction,
