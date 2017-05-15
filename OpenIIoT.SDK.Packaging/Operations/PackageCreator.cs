@@ -114,8 +114,6 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             ArgumentValidator.ValidateInputDirectoryArgument(inputDirectory);
             ArgumentValidator.ValidatePackageFileArgumentForWriting(packageFile);
 
-            Exception deferredException = default(Exception);
-
             if (signPackage)
             {
                 ArgumentValidator.ValidatePrivateKeyArguments(privateKeyFile, passphrase);
@@ -126,7 +124,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                 }
             }
 
-            PackageManifest manifest = ValidateManifestFileArgumentAndRetrieveManifest(manifestFile);
+            Exception deferredException = default(Exception);
 
             Info($"Creating package '{Path.GetFileName(packageFile)}' from directory '{inputDirectory}' using manifest file '{Path.GetFileName(manifestFile)}'...");
 
@@ -134,6 +132,8 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             {
                 Info($"Package will be signed using PGP private key file '{Path.GetFileName(privateKeyFile)}' as keybase.io user '{keybaseUsername}'.");
             }
+
+            PackageManifest manifest = ValidateManifestFileArgumentAndRetrieveManifest(manifestFile);
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());

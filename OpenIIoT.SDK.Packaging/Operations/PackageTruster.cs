@@ -145,13 +145,13 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="manifest">The Manifest with which the Package file will be updated.</param>
         private static void UpdatePackageManifest(string packageFile, PackageManifest manifest)
         {
-            Exception deferredException = default(Exception);
+            Verbose($"Updating Manifest in Package '{Path.GetFileName(packageFile)}'...");
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
             string tempFile = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
 
-            Verbose($"Updating Manifest in Package '{Path.GetFileName(packageFile)}'...");
+            Exception deferredException = default(Exception);
 
             try
             {

@@ -93,9 +93,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
             ArgumentValidator.ValidateOutputDirectoryArgument(outputDirectory, overwrite);
 
-            Exception deferredException = default(Exception);
-
             Info($"Extracting package '{Path.GetFileName(packageFile)}' to directory '{outputDirectory}'...");
+
+            Exception deferredException = default(Exception);
 
             if (!skipVerification)
             {
@@ -118,7 +118,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                 {
                     Verbose($"Deleting existing output directory '{outputDirectory}'...");
                     Directory.Delete(outputDirectory, true);
-                    Verbose(" √ Output directory deleted successfully.");
+                    Verbose("Output directory deleted successfully.");
                 }
 
                 Verbose($"Extracting payload archive to destination '{outputDirectory}'...");

@@ -94,9 +94,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
 
-            PackageManifest manifest = new PackageManifest();
-
             Info($"Extracting manifest '{Package.Constants.ManifestFilename}' from package '{packageFile}'...");
+
+            PackageManifest manifest = new PackageManifest();
 
             try
             {
@@ -133,7 +133,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             Success("Manifest extracted successfully.");
 
-            if (manifestFile != default(string))
+            if (!string.IsNullOrEmpty(manifestFile))
             {
                 try
                 {

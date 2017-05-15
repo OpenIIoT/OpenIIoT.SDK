@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using OpenIIoT.SDK.Package.Manifest;
 using Utility.PGPSignatureTools;
 using OpenIIoT.SDK.Packaging.Properties;
+using OpenIIoT.SDK.Common;
 
 namespace OpenIIoT.SDK.Package.Packaging.Operations
 {
@@ -40,8 +41,22 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
         #region Public Methods
 
-        public static void VerifyPackage(string packageFile)
+        /// <summary>
+        ///     Verifies the specified Package.
+        /// </summary>
+        /// <param name="packageFile">The Package to verify.</param>
+        /// <param name="publicKeyFile">The filename of the file containing the ASCII armored PGP private key.</param>
+        public static void VerifyPackage(string packageFile, string publicKeyFile = "")
         {
+            ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
+
+            if (!string.IsNullOrEmpty(publicKeyFile))
+            {
+                ArgumentValidator.ValidatePublicKeyArgument(publicKeyFile);
+            }
+
+            Info($"Verifying Package '{Path.GetFileName(packageFile)}'...");
+
             Exception deferredException = default(Exception);
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
@@ -54,79 +69,117 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                 Verbose("Package extracted successfully.");
 
                 Verbose("Checking extracted files...");
-
                 string manifestFilename = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
+
                 if (!File.Exists(manifestFilename))
                 {
                     throw new FileNotFoundException("it does not contain a manifest.");
                 }
 
                 string payloadFilename = Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName);
+
                 if (!File.Exists(payloadFilename))
                 {
                     throw new FileNotFoundException("it does not contain a payload archive.");
                 }
-
                 Verbose("Manifest and Payload Archive extracted successfully.");
+
                 Verbose("Extracting Payload Archive...");
-
                 ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName));
-
                 Verbose("Payload Archive extracted successfully.");
-                Verbose("Checking extracted files...");
 
+                Verbose("Checking extracted files...");
                 string payloadDirectory = Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName);
 
                 if (Directory.GetFiles(payloadDirectory).Length == 0)
                 {
                     throw new FileNotFoundException("the payload directory does not contain any files.");
                 }
-
                 Verbose("Extracted files validated successfully.");
 
                 Verbose($"Fetching manifest from '{manifestFilename}'...");
                 PackageManifest manifest = ReadManifest(manifestFilename);
                 Verbose("Manifest fetched successfully.");
 
+                string verifiedTrust = string.Empty;
+
+                // verify Trust
                 if (!string.IsNullOrEmpty(manifest.Signature.Trust))
                 {
                     Verbose("Verifying the Manifest Trust...");
 
                     if (string.IsNullOrEmpty(manifest.Signature.Digest))
                     {
-                        throw new InvalidDataException("the manifest is trusted but it contains no digest to trust.");
+                        throw new InvalidDataException("the Manifest is Trusted but it contains no Digest to trust.");
                     }
 
                     byte[] trustBytes = Encoding.ASCII.GetBytes(manifest.Signature.Trust);
-
-                    File.WriteAllBytes(@"C:\pkg\trust.txt", trustBytes);
-                    File.WriteAllText(@"C:\pkg\key.txt", Resources.PGPPublicKey);
-
-                    byte[] verifiedDigestBytes;
+                    byte[] verifiedTrustBytes;
 
                     try
                     {
-                        verifiedDigestBytes = PGPSignature.Verify(trustBytes, Resources.PGPPublicKey);
+                        verifiedTrustBytes = PGPSignature.Verify(trustBytes, Resources.PGPPublicKey);
                     }
                     catch (Exception ex)
                     {
-                        throw new InvalidDataException($"an Exception was thrown while verifying the Trust: {ex}");
+                        throw new InvalidDataException($"an Exception was thrown while verifying the Trust: {ex.GetType().Name}: {ex.Message}");
                     }
 
-                    string verifiedDigest = Encoding.ASCII.GetString(verifiedDigestBytes);
+                    verifiedTrust = Encoding.ASCII.GetString(verifiedTrustBytes);
 
-                    if (manifest.Signature.Digest != verifiedDigest)
+                    if (manifest.Signature.Digest != verifiedTrust)
                     {
-                        throw new InvalidDataException("the manifest trust is not valid.");
+                        throw new InvalidDataException("the Manifest Trust is not valid; the Trusted Digest does not match the Digest in the Manifest.");
                     }
 
                     Verbose("Trust verified successfully.");
                 }
 
+                // verify Signature. start by determining the public key to use.
+                string publicKey = string.Empty;
+                string verifiedDigest = string.Empty;
+
                 if (!string.IsNullOrEmpty(manifest.Signature.Digest))
                 {
-                    // TODO: validate signature
+                    if (!string.IsNullOrEmpty(publicKeyFile))
+                    {
+                        publicKey = File.ReadAllText(publicKeyFile);
+                    }
+                    else
+                    {
+                        publicKey = FetchPublicKeyForUser(manifest.Signature.Subject);
+                    }
+
+                    byte[] digestBytes = Encoding.ASCII.GetBytes(manifest.Signature.Digest);
+                    byte[] verifiedDigestBytes;
+
+                    try
+                    {
+                        verifiedDigestBytes = PGPSignature.Verify(digestBytes, publicKey);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidDataException($"an Exception was thrown while verifying the Digest: {ex.GetType().Name}: {ex.Message}");
+                    }
+
+                    verifiedDigest = Encoding.ASCII.GetString(verifiedDigestBytes);
+
+                    // remove the digest and trust from the manifest, then serialize it and compare it to the verified digest.
+                    manifest.Signature.Digest = default(string);
+                    manifest.Signature.Trust = default(string);
+
+                    // if the scrubbed manifest and verified digest don't match, something was tampered with.
+                    if (manifest.ToJson() != verifiedDigest)
+                    {
+                        throw new InvalidDataException("the Manifest Digest is not valid; the verified Digest does not match the Manifest.");
+                    }
+
+                    Verbose("Digest verified successfully.");
                 }
+
+                // TODO: validate files.
+
+                Success("Package verified successfully.");
             }
             catch (Exception ex)
             {
@@ -136,7 +189,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             {
                 Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                Verbose(" √ Temporary files deleted successfully.");
+                Verbose("Temporary files deleted successfully.");
 
                 if (deferredException != default(Exception))
                 {
@@ -184,7 +237,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
             catch (Exception ex)
             {
-                throw new WebException($"Failed to fetch the object from '{url}': {ex.Message}");
+                throw new WebException($"Failed to retrieve the PGP Public Key for the package: '{url}': {ex.Message}");
             }
         }
 
@@ -200,6 +253,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             }
         }
 
+        /// <summary>
+        ///     Reads and deserializes the <see cref="PackageManifest"/> contains within the specified file.
+        /// </summary>
+        /// <param name="manifestFilename">the file from which to read and deserialize the Manifest.</param>
+        /// <returns>The deserialized Manifest.</returns>
         private static PackageManifest ReadManifest(string manifestFilename)
         {
             try
@@ -209,29 +267,6 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             catch (Exception ex)
             {
                 throw new InvalidDataException($"The contents of manifest file '{manifestFilename}' could not be read and deserialized: {ex.Message}");
-            }
-        }
-
-        private static void ValidatePackageFileArgument(string packageFile)
-        {
-            if (string.IsNullOrEmpty(packageFile))
-            {
-                throw new ArgumentException($"The required argument 'package' (-p|--package) was not supplied.");
-            }
-
-            if (!File.Exists(packageFile))
-            {
-                throw new FileNotFoundException($"The specified package file '{packageFile}' could not be found.");
-            }
-
-            if (new FileInfo(packageFile).Length == 0)
-            {
-                throw new InvalidDataException($"The specified package file '{packageFile}' is empty.");
-            }
-
-            if (!File.OpenRead(packageFile).CanRead)
-            {
-                throw new IOException($"The specified package file '{packageFile}' could not be opened for reading.  It may be open in another process, or you may have insufficient rights.");
             }
         }
 

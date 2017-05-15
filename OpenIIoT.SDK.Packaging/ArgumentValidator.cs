@@ -185,7 +185,7 @@ namespace OpenIIoT.SDK.Package.Packaging
         {
             if (privateKeyFile == default(string) || privateKeyFile == string.Empty)
             {
-                throw new ArgumentException($"The required argument 'private key' was not supplied.");
+                throw new ArgumentException("The required argument 'private key' was not supplied.");
             }
 
             if (!File.Exists(privateKeyFile))
@@ -212,6 +212,50 @@ namespace OpenIIoT.SDK.Package.Packaging
             catch (Exception ex)
             {
                 throw new ArgumentException($"Error opening the specified private key with the specified passphrase: {ex.GetType().Name}: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
+        ///     Validates the publicKeyFile argument for packaging operations.
+        /// </summary>
+        /// <param name="publicKeyFile">The value specified for the publicKeyFile argument.</param>
+        /// <exception cref="ArgumentException">Thrown when the publicKeyFile argument is null or empty.</exception>
+        /// <exception cref="FileNotFoundException">
+        ///     Thrown when the public key file can not be found on the local file system.
+        /// </exception>
+        /// <exception cref="InvalidDataException">Thrown when the public key file is empty.</exception>
+        /// <exception cref="IOException">Thrown when the public key file can not be read.</exception>
+        internal static void ValidatePublicKeyArgument(string publicKeyFile)
+        {
+            if (string.IsNullOrEmpty(publicKeyFile))
+            {
+                throw new ArgumentException("The required argument 'public key' was not supplied.");
+            }
+
+            if (!File.Exists(publicKeyFile))
+            {
+                throw new FileNotFoundException($"The specified public key file '{publicKeyFile}' could not be found.");
+            }
+
+            if (new FileInfo(publicKeyFile).Length == 0)
+            {
+                throw new InvalidDataException($"The specified public key file '{publicKeyFile}' is empty.");
+            }
+
+            FileStream publicKeyStream = default(FileStream);
+
+            try
+            {
+                publicKeyStream = File.OpenRead(publicKeyFile);
+
+                if (!publicKeyStream.CanRead)
+                {
+                    throw new IOException($"The specified public key file '{publicKeyFile}' could not be opened for reading.  It may be open in another process, or you may have insufficient rights.");
+                }
+            }
+            finally
+            {
+                publicKeyStream.Close();
             }
         }
 
