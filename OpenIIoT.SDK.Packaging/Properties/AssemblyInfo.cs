@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("OpenIIoT.SDK.Packaging")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Packaging Software Development Kit for the OpenIIoT Project.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("OpenIIoT")]
 [assembly: AssemblyProduct("OpenIIoT.SDK.Packaging")]
