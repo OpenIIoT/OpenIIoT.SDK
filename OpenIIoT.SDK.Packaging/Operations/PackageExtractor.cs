@@ -48,35 +48,14 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// <summary>
     ///     Extracts Package files.
     /// </summary>
-    public static class PackageExtractor
+    public class PackageExtractor : PackagingOperation
     {
-        #region Private Fields
+        #region Public Constructors
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
-        /// </summary>
-        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+        public PackageExtractor() : base(PackagingOperationType.ExtractPackage)
+        { }
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
-        /// </summary>
-        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
-        /// </summary>
-        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
-
-        #endregion Private Fields
-
-        #region Public Events
-
-        /// <summary>
-        ///     Raised when a new status message is generated.
-        /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
-
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -88,7 +67,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="outputDirectory">The directory into which the Package payload is to be extracted.</param>
         /// <param name="overwrite">A value indicating whether the output directory should be overwritten if it exists.</param>
         /// <param name="skipVerification">A value indicating whether the verification prior to extraction is to be skipped.</param>
-        public static void ExtractPackage(string packageFile, string outputDirectory, bool overwrite = false, bool skipVerification = false)
+        public void ExtractPackage(string packageFile, string outputDirectory, bool overwrite = false, bool skipVerification = false)
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
             ArgumentValidator.ValidateOutputDirectoryArgument(outputDirectory, overwrite);
@@ -99,7 +78,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
 
             if (!skipVerification)
             {
-                PackageVerifier.VerifyPackage(packageFile);
+                new PackageVerifier().VerifyPackage(packageFile);
             }
             else
             {
@@ -143,21 +122,5 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(PackagingUpdateType type, string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
-            }
-        }
-
-        #endregion Private Methods
     }
 }

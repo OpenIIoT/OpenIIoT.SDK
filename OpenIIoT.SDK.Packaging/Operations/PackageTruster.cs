@@ -52,35 +52,15 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// <summary>
     ///     Adds a Trust to the <see cref="PackageManifest"/> of Packages.
     /// </summary>
-    public static class PackageTruster
+    public class PackageTruster : PackagingOperation
     {
-        #region Private Fields
+        #region Public Constructors
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
-        /// </summary>
-        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+        public PackageTruster() : base(PackagingOperationType.Trust)
+        {
+        }
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
-        /// </summary>
-        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
-        /// </summary>
-        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
-
-        #endregion Private Fields
-
-        #region Public Events
-
-        /// <summary>
-        ///     Raised when a new status message is generated.
-        /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
-
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -91,14 +71,14 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="packageFile">The Package for which the Trust is to be added.</param>
         /// <param name="privateKeyFile">The filename of the file containing the ASCII armored PGP private key.</param>
         /// <param name="passphrase">The passphrase for the specified PGP private key.</param>
-        public static void TrustPackage(string packageFile, string privateKeyFile, string passphrase)
+        public void TrustPackage(string packageFile, string privateKeyFile, string passphrase)
         {
             ArgumentValidator.ValidatePackageFileArgumentForWriting(packageFile, true);
             ArgumentValidator.ValidatePrivateKeyArguments(privateKeyFile, passphrase);
 
             Info($"Adding Trust to Package '{Path.GetFileName(packageFile)}'...");
 
-            PackageManifest manifest = ManifestExtractor.ExtractManifest(packageFile);
+            PackageManifest manifest = new ManifestExtractor().ExtractManifest(packageFile);
 
             Verbose("Checking (but not validating) Digest...");
 
@@ -127,23 +107,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         #region Private Methods
 
         /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(PackagingUpdateType type, string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
-            }
-        }
-
-        /// <summary>
         ///     Updates the specified Package, replacing the existing Manifest with the specified Manifest.
         /// </summary>
         /// <param name="packageFile">The filename of the Package file to update.</param>
         /// <param name="manifest">The Manifest with which the Package file will be updated.</param>
-        private static void UpdatePackageManifest(string packageFile, PackageManifest manifest)
+        private void UpdatePackageManifest(string packageFile, PackageManifest manifest)
         {
             Verbose($"Updating Manifest in Package '{Path.GetFileName(packageFile)}'...");
 

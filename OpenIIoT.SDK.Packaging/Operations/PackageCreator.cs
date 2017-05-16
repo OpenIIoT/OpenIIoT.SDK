@@ -53,35 +53,14 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// <summary>
     ///     Creates Package files.
     /// </summary>
-    public static class PackageCreator
+    public class PackageCreator : PackagingOperation
     {
-        #region Private Fields
+        #region Public Constructors
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
-        /// </summary>
-        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+        public PackageCreator() : base(PackagingOperationType.Package)
+        { }
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
-        /// </summary>
-        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
-        /// </summary>
-        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
-
-        #endregion Private Fields
-
-        #region Public Events
-
-        /// <summary>
-        ///     Raised when a new status message is generated.
-        /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
-
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -91,7 +70,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="inputDirectory">The directory containing the Package contents.</param>
         /// <param name="manifestFile">The PackageManifest file for the Package.</param>
         /// <param name="packageFile">The filename to which the Package file will be saved.</param>
-        public static void CreatePackage(string inputDirectory, string manifestFile, string packageFile)
+        public void CreatePackage(string inputDirectory, string manifestFile, string packageFile)
         {
             CreatePackage(inputDirectory, manifestFile, packageFile, false, string.Empty, string.Empty, string.Empty);
         }
@@ -109,7 +88,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="keybaseUsername">
         ///     The Keybase.io username of the account hosting the PGP public key used for digest verification.
         /// </param>
-        public static void CreatePackage(string inputDirectory, string manifestFile, string packageFile, bool signPackage, string privateKeyFile, string passphrase, string keybaseUsername)
+        public void CreatePackage(string inputDirectory, string manifestFile, string packageFile, bool signPackage, string privateKeyFile, string passphrase, string keybaseUsername)
         {
             ArgumentValidator.ValidateInputDirectoryArgument(inputDirectory);
             ArgumentValidator.ValidatePackageFileArgumentForWriting(packageFile);
@@ -214,7 +193,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// </summary>
         /// <param name="manifest">The manifest for which validation and hash generation is to be performed.</param>
         /// <param name="directory">The directory containing payload files.</param>
-        internal static void ValidateManifestAndGenerateHashes(PackageManifest manifest, string directory)
+        internal void ValidateManifestAndGenerateHashes(PackageManifest manifest, string directory)
         {
             foreach (PackageManifestFileType type in manifest.Files.Keys)
             {
@@ -249,7 +228,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// </exception>
         /// <exception cref="InvalidDataException">Thrown when the manifest file is empty.</exception>
         /// <exception cref="FileLoadException">Thrown when the manifest file fails to be loaded or deserialized.</exception>
-        internal static PackageManifest ValidateManifestFileArgumentAndRetrieveManifest(string manifestFile)
+        internal PackageManifest ValidateManifestFileArgumentAndRetrieveManifest(string manifestFile)
         {
             if (manifestFile == default(string) || manifestFile == string.Empty)
             {
@@ -284,18 +263,6 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         }
 
         /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(PackagingUpdateType type, string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
-            }
-        }
-
-        /// <summary>
         ///     Digitally signs the specified manifest, adds the signature to the manifest, and returns it.
         /// </summary>
         /// <param name="manifest">The manifest to sign.</param>
@@ -305,13 +272,13 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         ///     The Keybase.io username of the account hosting the PGP public key used for digest verification.
         /// </param>
         /// <returns>The signed manifest.</returns>
-        private static PackageManifest SignManifest(PackageManifest manifest, string privateKeyFile, string passphrase, string keybaseUsername)
+        private PackageManifest SignManifest(PackageManifest manifest, string privateKeyFile, string passphrase, string keybaseUsername)
         {
             Info("Digitally signing manifest...");
 
             // insert a signature into the manifest. the signer must be included in the hash to prevent tampering.
             PackageManifestSignature signature = new PackageManifestSignature();
-            signature.Issuer = Constants.KeyIssuer;
+            signature.Issuer = PackagingConstants.KeyIssuer;
             signature.Subject = keybaseUsername;
             manifest.Signature = signature;
 
@@ -340,7 +307,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// </summary>
         /// <param name="manifest">The manifest to serialize and write.</param>
         /// <param name="directory">The directory into which the generated file will be written.</param>
-        private static void WriteManifest(PackageManifest manifest, string directory)
+        private void WriteManifest(PackageManifest manifest, string directory)
         {
             string destinationFile = Path.Combine(directory, Package.Constants.ManifestFilename);
             string contents = manifest.ToJson();

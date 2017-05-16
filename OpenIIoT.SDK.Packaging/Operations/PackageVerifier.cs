@@ -12,32 +12,15 @@ using OpenIIoT.SDK.Common;
 
 namespace OpenIIoT.SDK.Package.Packaging.Operations
 {
-    public static class PackageVerifier
+    public class PackageVerifier : PackagingOperation
     {
-        #region Private Fields
+        #region Public Constructors
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
-        /// </summary>
-        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+        public PackageVerifier() : base(PackagingOperationType.Verify)
+        {
+        }
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
-        /// </summary>
-        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
-        /// </summary>
-        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
-
-        #endregion Private Fields
-
-        #region Public Events
-
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
-
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -46,7 +29,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// </summary>
         /// <param name="packageFile">The Package to verify.</param>
         /// <param name="publicKeyFile">The filename of the file containing the ASCII armored PGP private key.</param>
-        public static void VerifyPackage(string packageFile, string publicKeyFile = "")
+        public void VerifyPackage(string packageFile, string publicKeyFile = "")
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
 
@@ -208,9 +191,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="username">The keybase.io username of the user for which the PGP public key is to be fetched..</param>
         /// <returns>The fetched PGP public key.</returns>
         /// <exception cref="WebException">Thrown when an error occurs fetching the key.</exception>
-        public static string FetchPublicKeyForUser(string username)
+        public string FetchPublicKeyForUser(string username)
         {
-            string url = Constants.KeyUrlBase.Replace(Constants.KeyUrlPlaceholder, username);
+            string url = PackagingConstants.KeyUrlBase.Replace(PackagingConstants.KeyUrlPlaceholder, username);
 
             Verbose($"Fetching PGP key information from {url}...");
 
@@ -225,9 +208,9 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                     JObject key = JObject.Parse(content);
                     string publicKey = key["them"]["public_keys"]["primary"]["bundle"].ToString();
 
-                    if (publicKey.Length < Constants.KeyMinimumLength)
+                    if (publicKey.Length < PackagingConstants.KeyMinimumLength)
                     {
-                        throw new InvalidDataException($"The length of the retrieved key was not long enough (expected: >= {Constants.KeyMinimumLength}, actual: {publicKey.Length}) to be a valid PGP public key.");
+                        throw new InvalidDataException($"The length of the retrieved key was not long enough (expected: >= {PackagingConstants.KeyMinimumLength}, actual: {publicKey.Length}) to be a valid PGP public key.");
                     }
 
                     Verbose($"Public key fetched successfully.");
@@ -242,23 +225,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         }
 
         /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(PackagingUpdateType type, string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
-            }
-        }
-
-        /// <summary>
         ///     Reads and deserializes the <see cref="PackageManifest"/> contains within the specified file.
         /// </summary>
         /// <param name="manifestFilename">the file from which to read and deserialize the Manifest.</param>
         /// <returns>The deserialized Manifest.</returns>
-        private static PackageManifest ReadManifest(string manifestFilename)
+        private PackageManifest ReadManifest(string manifestFilename)
         {
             try
             {

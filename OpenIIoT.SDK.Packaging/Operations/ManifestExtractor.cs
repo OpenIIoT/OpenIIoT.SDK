@@ -52,35 +52,14 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
     /// <summary>
     ///     Extracts <see cref="PackageManifest"/> objects from Packages.
     /// </summary>
-    public static class ManifestExtractor
+    public class ManifestExtractor : PackagingOperation
     {
-        #region Private Fields
+        #region Public Constructors
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
-        /// </summary>
-        private static Action<string> Info = message => OnUpdated(PackagingUpdateType.Info, message);
+        public ManifestExtractor() : base(PackagingOperationType.ExtractManifest)
+        { }
 
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
-        /// </summary>
-        private static Action<string> Success = message => OnUpdated(PackagingUpdateType.Success, message);
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
-        /// </summary>
-        private static Action<string> Verbose = message => OnUpdated(PackagingUpdateType.Verbose, message);
-
-        #endregion Private Fields
-
-        #region Public Events
-
-        /// <summary>
-        ///     Raised when a new status message is generated.
-        /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
-
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -90,7 +69,7 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="packageFile">The Package from which the manifest is to be extracted.</param>
         /// <param name="manifestFile">The filename of the file to which the manifest is to be saved.</param>
         /// <returns>The extracted manifest object.</returns>
-        public static PackageManifest ExtractManifest(string packageFile, string manifestFile = "")
+        public PackageManifest ExtractManifest(string packageFile, string manifestFile = "")
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
 
@@ -151,21 +130,5 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(PackagingUpdateType type, string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperationType.ManifestExtraction, type, message));
-            }
-        }
-
-        #endregion Private Methods
     }
 }

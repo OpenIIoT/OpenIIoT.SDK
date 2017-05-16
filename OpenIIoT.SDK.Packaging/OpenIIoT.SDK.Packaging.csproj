@@ -59,13 +59,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArgumentValidator.cs" />
-    <Compile Include="Constants.cs" />
+    <Compile Include="PackagingConstants.cs" />
     <Compile Include="Operations\ManifestExtractor.cs" />
     <Compile Include="Operations\ManifestGenerator.cs" />
     <Compile Include="Operations\PackageCreator.cs" />
     <Compile Include="Operations\PackageExtractor.cs" />
     <Compile Include="Operations\PackageTruster.cs" />
     <Compile Include="Operations\PackageVerifier.cs" />
+    <Compile Include="PackagingOperation.cs" />
     <Compile Include="PackagingUpdateType.cs" />
     <Compile Include="PackagingOperationType.cs" />
     <Compile Include="PackagingUpdateEventArgs.cs" />

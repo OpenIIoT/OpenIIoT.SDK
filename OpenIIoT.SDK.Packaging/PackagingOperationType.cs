@@ -3,9 +3,9 @@
     public enum PackagingOperationType
     {
         Manifest,
-        ManifestExtraction,
+        ExtractManifest,
         Package,
-        PackageExtraction,
+        ExtractPackage,
         Trust,
         Verify
     }

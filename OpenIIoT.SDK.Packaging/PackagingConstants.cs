@@ -44,7 +44,7 @@ namespace OpenIIoT.SDK.Package.Packaging
     /// <summary>
     ///     Constants for the Packager application.
     /// </summary>
-    public static class Constants
+    public static class PackagingConstants
     {
         #region Public Fields
 
