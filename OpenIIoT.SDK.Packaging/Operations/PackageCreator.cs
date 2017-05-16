@@ -116,8 +116,8 @@ namespace OpenIIoT.SDK.Packaging.Operations
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
-            string payloadDirectory = Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName);
-            string payloadArchiveName = Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName);
+            string payloadDirectory = Path.Combine(tempDirectory, PackagingConstants.PayloadDirectoryName);
+            string payloadArchiveName = Path.Combine(tempDirectory, PackagingConstants.PayloadArchiveName);
             string tempPackageFileName = Path.Combine(tempDirectory, Path.GetFileName(packageFile));
 
             try
@@ -309,7 +309,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
         /// <param name="directory">The directory into which the generated file will be written.</param>
         private void WriteManifest(PackageManifest manifest, string directory)
         {
-            string destinationFile = Path.Combine(directory, Package.Constants.ManifestFilename);
+            string destinationFile = Path.Combine(directory, PackagingConstants.ManifestFilename);
             string contents = manifest.ToJson();
 
             File.WriteAllText(destinationFile, contents);

@@ -93,14 +93,14 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 Verbose("Package extracted successfully.");
 
                 Verbose("Checking extracted files...");
-                string manifestFilename = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
+                string manifestFilename = Path.Combine(tempDirectory, PackagingConstants.ManifestFilename);
 
                 if (!File.Exists(manifestFilename))
                 {
                     throw new FileNotFoundException("it does not contain a manifest.");
                 }
 
-                string payloadFilename = Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName);
+                string payloadFilename = Path.Combine(tempDirectory, PackagingConstants.PayloadArchiveName);
 
                 if (!File.Exists(payloadFilename))
                 {
@@ -109,11 +109,11 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 Verbose("Manifest and Payload Archive extracted successfully.");
 
                 Verbose("Extracting Payload Archive...");
-                ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName));
+                ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, PackagingConstants.PayloadDirectoryName));
                 Verbose("Payload Archive extracted successfully.");
 
                 Verbose("Checking extracted files...");
-                string payloadDirectory = Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName);
+                string payloadDirectory = Path.Combine(tempDirectory, PackagingConstants.PayloadDirectoryName);
 
                 if (Directory.GetFiles(payloadDirectory).Length == 0)
                 {

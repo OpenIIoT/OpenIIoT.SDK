@@ -73,7 +73,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
 
-            Info($"Extracting manifest '{Package.Constants.ManifestFilename}' from package '{packageFile}'...");
+            Info($"Extracting manifest '{PackagingConstants.ManifestFilename}' from package '{packageFile}'...");
 
             PackageManifest manifest = new PackageManifest();
 
@@ -81,7 +81,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
             {
                 Verbose($"Locating manifest inside of package...");
 
-                ZipArchiveEntry zippedManifestFile = ZipFile.OpenRead(packageFile).Entries.Where(e => e.Name == Package.Constants.ManifestFilename).FirstOrDefault();
+                ZipArchiveEntry zippedManifestFile = ZipFile.OpenRead(packageFile).Entries.Where(e => e.Name == PackagingConstants.ManifestFilename).FirstOrDefault();
                 string manifestString;
 
                 if (zippedManifestFile != default(ZipArchiveEntry))

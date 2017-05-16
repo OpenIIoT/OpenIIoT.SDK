@@ -117,7 +117,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
 
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
-            string tempFile = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
+            string tempFile = Path.Combine(tempDirectory, PackagingConstants.ManifestFilename);
 
             Exception deferredException = default(Exception);
 
@@ -133,11 +133,11 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 Verbose("Package file opened successfully.");
 
                 Verbose("Deleting existing Manifest file...");
-                package.GetEntry(Package.Constants.ManifestFilename).Delete();
+                package.GetEntry(PackagingConstants.ManifestFilename).Delete();
                 Verbose("Deleted existing Manifest file successfully.");
 
                 Verbose("Adding updated Manfiest file...");
-                package.CreateEntryFromFile(tempFile, Package.Constants.ManifestFilename);
+                package.CreateEntryFromFile(tempFile, PackagingConstants.ManifestFilename);
                 Verbose("Manifest updated successfully.");
 
                 Verbose("Saving Package...");

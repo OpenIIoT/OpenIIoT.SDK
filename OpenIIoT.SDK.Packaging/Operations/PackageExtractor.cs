@@ -101,7 +101,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 }
 
                 Verbose($"Extracting payload archive to destination '{outputDirectory}'...");
-                ZipFile.ExtractToDirectory(Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName), outputDirectory);
+                ZipFile.ExtractToDirectory(Path.Combine(tempDirectory, PackagingConstants.PayloadArchiveName), outputDirectory);
                 Success("Package extracted successfully.");
             }
             catch (Exception ex)
