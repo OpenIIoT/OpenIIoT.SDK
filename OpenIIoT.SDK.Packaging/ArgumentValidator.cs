@@ -43,7 +43,7 @@ using System;
 using System.IO;
 using Utility.PGPSignatureTools;
 
-namespace OpenIIoT.SDK.Package.Packaging
+namespace OpenIIoT.SDK.Packaging
 {
     /// <summary>
     ///     Contains methods used to validate arguments for packaging operations.

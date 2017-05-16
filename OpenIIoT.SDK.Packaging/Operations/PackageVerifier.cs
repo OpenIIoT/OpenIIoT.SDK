@@ -10,7 +10,7 @@ using Utility.PGPSignatureTools;
 using OpenIIoT.SDK.Packaging.Properties;
 using OpenIIoT.SDK.Common;
 
-namespace OpenIIoT.SDK.Package.Packaging.Operations
+namespace OpenIIoT.SDK.Packaging.Operations
 {
     public class PackageVerifier : PackagingOperation
     {

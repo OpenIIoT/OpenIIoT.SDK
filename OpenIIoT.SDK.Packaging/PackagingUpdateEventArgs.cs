@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace OpenIIoT.SDK.Package.Packaging
+namespace OpenIIoT.SDK.Packaging
 {
     public class PackagingUpdateEventArgs : EventArgs
     {

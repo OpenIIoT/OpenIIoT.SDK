@@ -1,4 +1,4 @@
-﻿namespace OpenIIoT.SDK.Package.Packaging
+﻿namespace OpenIIoT.SDK.Packaging
 {
     public enum PackagingOperationType
     {
