@@ -13,7 +13,7 @@
  ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄  ▄▄ ▄▄   ▄▄▄▄ ▄▄     ▄▄     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄ ▄
  █████████████████████████████████████████████████████████████ ███████████████ ██  ██ ██   ████ ██     ██     ████████████████ █ █
       ▄
-      █
+      █  Verifies the Trust, Digest and payload checksum of Packages.
       █
       █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀▀ ▀ ▀▀▀     ▀▀               ▀
       █  The GNU Affero General Public License (GNU AGPL)
@@ -46,18 +46,25 @@ using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using OpenIIoT.SDK.Package.Manifest;
-using Utility.PGPSignatureTools;
-using OpenIIoT.SDK.Packaging.Properties;
 using OpenIIoT.SDK.Common;
+using OpenIIoT.SDK.Package.Manifest;
+using OpenIIoT.SDK.Packaging.Properties;
+using Utility.PGPSignatureTools;
 
 namespace OpenIIoT.SDK.Packaging.Operations
 {
+    /// <summary>
+    ///     Verifies Packages.
+    /// </summary>
     public class PackageVerifier : PackagingOperation
     {
         #region Public Constructors
 
-        public PackageVerifier() : base(PackagingOperationType.Verify)
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PackageVerifier"/> class.
+        /// </summary>
+        public PackageVerifier()
+            : base(PackagingOperationType.Verify)
         {
         }
 
@@ -106,6 +113,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 {
                     throw new FileNotFoundException("it does not contain a payload archive.");
                 }
+
                 Verbose("Manifest and Payload Archive extracted successfully.");
 
                 Verbose("Extracting Payload Archive...");
@@ -119,6 +127,7 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 {
                     throw new FileNotFoundException("the payload directory does not contain any files.");
                 }
+
                 Verbose("Extracted files validated successfully.");
 
                 Verbose($"Fetching manifest from '{manifestFilename}'...");
@@ -202,7 +211,6 @@ namespace OpenIIoT.SDK.Packaging.Operations
                 }
 
                 // TODO: validate files.
-
                 Success("Package verified successfully.");
             }
             catch (Exception ex)

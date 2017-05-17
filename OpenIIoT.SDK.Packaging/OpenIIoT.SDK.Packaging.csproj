@@ -83,7 +83,7 @@
   <ItemGroup>
     <None Include="OpenIIoT.ruleset" />
     <None Include="packages.config" />
-    <None Include="stylecop.json" />
+    <AdditionalFiles Include="stylecop.json" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">

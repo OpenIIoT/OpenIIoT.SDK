@@ -57,8 +57,13 @@ namespace OpenIIoT.SDK.Packaging.Operations
     {
         #region Public Constructors
 
-        public PackageCreator() : base(PackagingOperationType.Package)
-        { }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PackageCreator"/> class.
+        /// </summary>
+        public PackageCreator()
+            : base(PackagingOperationType.Package)
+        {
+        }
 
         #endregion Public Constructors
 

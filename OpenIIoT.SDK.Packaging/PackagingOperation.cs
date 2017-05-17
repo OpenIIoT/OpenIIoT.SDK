@@ -74,6 +74,7 @@ namespace OpenIIoT.SDK.Packaging
         /// <summary>
         ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Info"/>.
         /// </summary>
+        /// <param name="message">The message.</param>
         protected void Info(string message)
         {
             OnUpdated(PackagingUpdateType.Info, message);
@@ -82,6 +83,7 @@ namespace OpenIIoT.SDK.Packaging
         /// <summary>
         ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Success"/>.
         /// </summary>
+        /// <param name="message">The message.</param>
         protected void Success(string message)
         {
             OnUpdated(PackagingUpdateType.Success, message);
@@ -90,6 +92,7 @@ namespace OpenIIoT.SDK.Packaging
         /// <summary>
         ///     Raises the <see cref="Updated"/> event with a message of type <see cref="PackagingUpdateType.Verbose"/>.
         /// </summary>
+        /// <param name="message">The message.</param>
         protected void Verbose(string message)
         {
             OnUpdated(PackagingUpdateType.Verbose, message);
@@ -102,6 +105,7 @@ namespace OpenIIoT.SDK.Packaging
         /// <summary>
         ///     Raises the <see cref="Updated"/> event with the specified message.
         /// </summary>
+        /// <param name="type">The message type.</param>
         /// <param name="message">The message to send.</param>
         private void OnUpdated(PackagingUpdateType type, string message)
         {

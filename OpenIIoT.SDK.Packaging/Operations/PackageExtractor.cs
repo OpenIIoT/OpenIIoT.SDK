@@ -52,8 +52,13 @@ namespace OpenIIoT.SDK.Packaging.Operations
     {
         #region Public Constructors
 
-        public PackageExtractor() : base(PackagingOperationType.ExtractPackage)
-        { }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PackageExtractor"/> class.
+        /// </summary>
+        public PackageExtractor()
+            : base(PackagingOperationType.ExtractPackage)
+        {
+        }
 
         #endregion Public Constructors
 

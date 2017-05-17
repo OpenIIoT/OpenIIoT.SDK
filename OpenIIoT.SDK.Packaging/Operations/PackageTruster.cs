@@ -56,7 +56,11 @@ namespace OpenIIoT.SDK.Packaging.Operations
     {
         #region Public Constructors
 
-        public PackageTruster() : base(PackagingOperationType.Trust)
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PackageTruster"/> class.
+        /// </summary>
+        public PackageTruster()
+            : base(PackagingOperationType.Trust)
         {
         }
 

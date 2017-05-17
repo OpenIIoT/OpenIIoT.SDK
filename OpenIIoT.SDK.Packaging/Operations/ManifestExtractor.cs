@@ -56,8 +56,13 @@ namespace OpenIIoT.SDK.Packaging.Operations
     {
         #region Public Constructors
 
-        public ManifestExtractor() : base(PackagingOperationType.ExtractManifest)
-        { }
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ManifestExtractor"/> class.
+        /// </summary>
+        public ManifestExtractor()
+            : base(PackagingOperationType.ExtractManifest)
+        {
+        }
 
         #endregion Public Constructors
 

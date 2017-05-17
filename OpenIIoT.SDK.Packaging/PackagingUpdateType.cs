@@ -41,10 +41,24 @@
 
 namespace OpenIIoT.SDK.Packaging
 {
+    /// <summary>
+    ///     Enumeration of the different update types.
+    /// </summary>
     public enum PackagingUpdateType
     {
+        /// <summary>
+        ///     A verbose, technically oriented message.
+        /// </summary>
         Verbose,
+
+        /// <summary>
+        ///     An informational message.
+        /// </summary>
         Info,
+
+        /// <summary>
+        ///     A message sent upon successful completion of an operation.
+        /// </summary>
         Success
     }
 }
