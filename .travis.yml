@@ -1,9 +1,0 @@
-os:
-  - linux
-language: csharp
-solution: OpenIIoT.SDK.Packaging.sln
-install:
-  - nuget restore OpenIIoT.SDK.Packaging.sln
-script:
-  - xbuild /p:Configuration=Release OpenIIoT.SDK.Packaging.sln
-  - mono ./packages/xunit.runner.console.2.1.0/tools/xunit.console.exe ./OpenIIoT.SDK.Packaging.Tests/bin/Release/OpenIIoT.SDK.Packaging.Tests.dll
