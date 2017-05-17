@@ -43,21 +43,24 @@ using System;
 using System.IO;
 using System.IO.Compression;
 
-namespace OpenIIoT.SDK.Package.Packaging.Operations
+namespace OpenIIoT.SDK.Packaging.Operations
 {
     /// <summary>
     ///     Extracts Package files.
     /// </summary>
-    public static class PackageExtractor
+    public class PackageExtractor : PackagingOperation
     {
-        #region Public Events
+        #region Public Constructors
 
         /// <summary>
-        ///     Raised when a new status message is generated.
+        ///     Initializes a new instance of the <see cref="PackageExtractor"/> class.
         /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
+        public PackageExtractor()
+            : base(PackagingOperationType.ExtractPackage)
+        {
+        }
 
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -69,69 +72,60 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="outputDirectory">The directory into which the Package payload is to be extracted.</param>
         /// <param name="overwrite">A value indicating whether the output directory should be overwritten if it exists.</param>
         /// <param name="skipVerification">A value indicating whether the verification prior to extraction is to be skipped.</param>
-        public static void ExtractPackage(string packageFile, string outputDirectory, bool overwrite = false, bool skipVerification = false)
+        public void ExtractPackage(string packageFile, string outputDirectory, bool overwrite = false, bool skipVerification = false)
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
             ArgumentValidator.ValidateOutputDirectoryArgument(outputDirectory, overwrite);
 
-            OnUpdated($"Extracting package '{Path.GetFileName(packageFile)}' to directory '{outputDirectory}'...");
+            Info($"Extracting package '{Path.GetFileName(packageFile)}' to directory '{outputDirectory}'...");
+
+            Exception deferredException = default(Exception);
 
             if (!skipVerification)
             {
-                PackageVerifier.VerifyPackage(packageFile);
+                new PackageVerifier().VerifyPackage(packageFile);
             }
             else
             {
-                OnUpdated("Package verification skipped.");
+                Info("Package verification skipped.");
             }
 
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
 
             try
             {
-                OnUpdated($"Extracting payload archive to '{tempDirectory}'...");
+                Verbose($"Extracting payload archive to '{tempDirectory}'...");
                 ZipFile.ExtractToDirectory(packageFile, tempDirectory);
-                OnUpdated(" √ Payload archive extracted successfully.");
+                Verbose("Payload archive extracted successfully.");
 
                 if (Directory.Exists(outputDirectory) && overwrite)
                 {
-                    OnUpdated($"Deleting existing output directory '{outputDirectory}'...");
+                    Verbose($"Deleting existing output directory '{outputDirectory}'...");
                     Directory.Delete(outputDirectory, true);
-                    OnUpdated(" √ Output directory deleted successfully.");
+                    Verbose("Output directory deleted successfully.");
                 }
 
-                OnUpdated($"Extracting payload archive to destination '{outputDirectory}'...");
-                ZipFile.ExtractToDirectory(Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName), outputDirectory);
-                OnUpdated(" √ Package extracted successfully.");
+                Verbose($"Extracting payload archive to destination '{outputDirectory}'...");
+                ZipFile.ExtractToDirectory(Path.Combine(tempDirectory, PackagingConstants.PayloadArchiveName), outputDirectory);
+                Success("Package extracted successfully.");
             }
             catch (Exception ex)
             {
-                OnUpdated($"Error extracting Package: {ex.Message}");
+                deferredException = new Exception($"Error extracting Package: {ex.Message}");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose(" √ Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, message));
-            }
-        }
-
-        #endregion Private Methods
     }
 }

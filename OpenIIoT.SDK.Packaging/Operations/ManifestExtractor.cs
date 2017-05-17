@@ -47,21 +47,24 @@ using Newtonsoft.Json;
 using OpenIIoT.SDK.Common;
 using OpenIIoT.SDK.Package.Manifest;
 
-namespace OpenIIoT.SDK.Package.Packaging.Operations
+namespace OpenIIoT.SDK.Packaging.Operations
 {
     /// <summary>
     ///     Extracts <see cref="PackageManifest"/> objects from Packages.
     /// </summary>
-    public static class ManifestExtractor
+    public class ManifestExtractor : PackagingOperation
     {
-        #region Public Events
+        #region Public Constructors
 
         /// <summary>
-        ///     Raised when a new status message is generated.
+        ///     Initializes a new instance of the <see cref="ManifestExtractor"/> class.
         /// </summary>
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
+        public ManifestExtractor()
+            : base(PackagingOperationType.ExtractManifest)
+        {
+        }
 
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
@@ -71,60 +74,60 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="packageFile">The Package from which the manifest is to be extracted.</param>
         /// <param name="manifestFile">The filename of the file to which the manifest is to be saved.</param>
         /// <returns>The extracted manifest object.</returns>
-        public static PackageManifest ExtractManifest(string packageFile, string manifestFile = "")
+        public PackageManifest ExtractManifest(string packageFile, string manifestFile = "")
         {
             ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
 
-            PackageManifest manifest = new PackageManifest();
+            Info($"Extracting manifest '{PackagingConstants.ManifestFilename}' from package '{packageFile}'...");
 
-            OnUpdated($"Extracting manifest '{Package.Constants.ManifestFilename}' from package '{packageFile}'...");
+            PackageManifest manifest = new PackageManifest();
 
             try
             {
-                OnUpdated($"Locating manifest inside of package...");
+                Verbose($"Locating manifest inside of package...");
 
-                ZipArchiveEntry zippedManifestFile = ZipFile.OpenRead(packageFile).Entries.Where(e => e.Name == Package.Constants.ManifestFilename).FirstOrDefault();
+                ZipArchiveEntry zippedManifestFile = ZipFile.OpenRead(packageFile).Entries.Where(e => e.Name == PackagingConstants.ManifestFilename).FirstOrDefault();
                 string manifestString;
 
                 if (zippedManifestFile != default(ZipArchiveEntry))
                 {
-                    OnUpdated(" √ Manifest located successfully.");
+                    Verbose("Manifest located successfully.");
 
-                    OnUpdated("Reading manifest from package...");
+                    Verbose("Reading manifest from package...");
                     manifestString = new StreamReader(zippedManifestFile.Open()).ReadToEnd();
-                    OnUpdated(" √ Manifest read successfully.");
+                    Verbose("Manifest read successfully.");
                 }
                 else
                 {
                     throw new FileNotFoundException($"The package '{Path.GetFileName(packageFile)}' does not contain a manifest.");
                 }
 
-                OnUpdated("Deserializing manifest...");
+                Verbose("Deserializing manifest...");
                 manifest = JsonConvert.DeserializeObject<PackageManifest>(manifestString);
-                OnUpdated(" √ Manifest deserialized successfully.");
+                Verbose("Manifest deserialized successfully.");
             }
             catch (JsonException ex)
             {
-                throw new InvalidDataException($"The manifest within package '{Path.GetFileName(packageFile)}' is malformed: {ex.Message}");
+                throw new Exception($"The manifest within package '{Path.GetFileName(packageFile)}' is malformed: {ex.Message}");
             }
             catch (Exception ex)
             {
-                throw new InvalidDataException($"Error extracting manifest from package '{Path.GetFileName(packageFile)}': {ex.Message}");
+                throw new Exception($"Error extracting manifest from package '{Path.GetFileName(packageFile)}': {ex.Message}");
             }
 
-            OnUpdated(" √ Manifest extracted.");
+            Success("Manifest extracted successfully.");
 
-            if (manifestFile != default(string))
+            if (!string.IsNullOrEmpty(manifestFile))
             {
                 try
                 {
-                    OnUpdated($"Saving extracted manifest to file '{manifestFile}'...");
+                    Info($"Saving extracted manifest to file '{manifestFile}'...");
                     File.WriteAllText(manifestFile, manifest.ToJson());
-                    OnUpdated(" √ File saved successfully.");
+                    Info("File saved successfully.");
                 }
                 catch (Exception ex)
                 {
-                    OnUpdated($"Unable to write to manifest file '{manifestFile}': {ex.Message}");
+                    throw new Exception($"Unable to write to manifest file '{manifestFile}': {ex.Message}");
                 }
             }
 
@@ -132,21 +135,5 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         }
 
         #endregion Public Methods
-
-        #region Private Methods
-
-        /// <summary>
-        ///     Raises the <see cref="Updated"/> event with the specified message.
-        /// </summary>
-        /// <param name="message">The message to send.</param>
-        private static void OnUpdated(string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.ManifestExtraction, message));
-            }
-        }
-
-        #endregion Private Methods
     }
 }

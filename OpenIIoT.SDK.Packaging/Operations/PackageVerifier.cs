@@ -1,121 +1,232 @@
-﻿using System;
+﻿/*
+      █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ▀▀▀  ▀  ▀      ▀▀
+      █
+      █      ▄███████▄                                                               ▄█    █▄
+      █     ███    ███                                                              ███    ███
+      █     ███    ███   ▄█████   ▄██████    █  █▄     ▄█████     ▄████▄     ▄█████ ███    ███    ▄█████    █████  █     ▄█████  █     ▄█████    █████
+      █     ███    ███   ██   ██ ██    ██   ██ ▄██▀    ██   ██   ██    ▀    ██   █  ███    ███   ██   █    ██  ██ ██    ██   ▀█ ██    ██   █    ██  ██
+      █   ▀█████████▀    ██   ██ ██    ▀    ██▐█▀      ██   ██  ▄██        ▄██▄▄    ███    ███  ▄██▄▄     ▄██▄▄█▀ ██▌  ▄██▄▄    ██▌  ▄██▄▄     ▄██▄▄█▀
+      █     ███        ▀████████ ██    ▄  ▀▀████     ▀████████ ▀▀██ ███▄  ▀▀██▀▀    ███    ███ ▀▀██▀▀    ▀███████ ██  ▀▀██▀▀    ██  ▀▀██▀▀    ▀███████
+      █     ███          ██   ██ ██    ██   ██ ▀██▄    ██   ██   ██    ██   ██   █   ██▄  ▄██    ██   █    ██  ██ ██    ██      ██    ██   █    ██  ██
+      █    ▄████▀        ██   █▀ ██████▀    ▀█   ▀█▀   ██   █▀   ██████▀    ███████   ▀████▀     ███████   ██  ██ █     ██      █     ███████   ██  ██
+      █
+ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄▄  ▄▄ ▄▄   ▄▄▄▄ ▄▄     ▄▄     ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄ ▄ ▄
+ █████████████████████████████████████████████████████████████ ███████████████ ██  ██ ██   ████ ██     ██     ████████████████ █ █
+      ▄
+      █  Verifies the Trust, Digest and payload checksum of Packages.
+      █
+      █▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀ ▀▀▀▀▀▀▀▀▀▀▀ ▀ ▀▀▀     ▀▀               ▀
+      █  The GNU Affero General Public License (GNU AGPL)
+      █
+      █  Copyright (C) 2016-2017 JP Dillingham (jp@dillingham.ws)
+      █
+      █  This program is free software: you can redistribute it and/or modify
+      █  it under the terms of the GNU Affero General Public License as published by
+      █  the Free Software Foundation, either version 3 of the License, or
+      █  (at your option) any later version.
+      █
+      █  This program is distributed in the hope that it will be useful,
+      █  but WITHOUT ANY WARRANTY; without even the implied warranty of
+      █  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      █  GNU Affero General Public License for more details.
+      █
+      █  You should have received a copy of the GNU Affero General Public License
+      █  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+      █
+      ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀  ▀▀ ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀██
+                                                                                                   ██
+                                                                                               ▀█▄ ██ ▄█▀
+                                                                                                 ▀████▀
+                                                                                                   ▀▀                            */
+
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenIIoT.SDK.Common;
 using OpenIIoT.SDK.Package.Manifest;
-using Utility.PGPSignatureTools;
 using OpenIIoT.SDK.Packaging.Properties;
+using Utility.PGPSignatureTools;
 
-namespace OpenIIoT.SDK.Package.Packaging.Operations
+namespace OpenIIoT.SDK.Packaging.Operations
 {
-    public static class PackageVerifier
+    /// <summary>
+    ///     Verifies Packages.
+    /// </summary>
+    public class PackageVerifier : PackagingOperation
     {
-        #region Public Events
+        #region Public Constructors
 
-        public static event EventHandler<PackagingUpdateEventArgs> Updated;
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="PackageVerifier"/> class.
+        /// </summary>
+        public PackageVerifier()
+            : base(PackagingOperationType.Verify)
+        {
+        }
 
-        #endregion Public Events
+        #endregion Public Constructors
 
         #region Public Methods
 
-        public static void VerifyPackage(string packageFile)
+        /// <summary>
+        ///     Verifies the specified Package.
+        /// </summary>
+        /// <param name="packageFile">The Package to verify.</param>
+        /// <param name="publicKeyFile">The filename of the file containing the ASCII armored PGP private key.</param>
+        public void VerifyPackage(string packageFile, string publicKeyFile = "")
         {
+            ArgumentValidator.ValidatePackageFileArgumentForReading(packageFile);
+
+            if (!string.IsNullOrEmpty(publicKeyFile))
+            {
+                ArgumentValidator.ValidatePublicKeyArgument(publicKeyFile);
+            }
+
+            Info($"Verifying Package '{Path.GetFileName(packageFile)}'...");
+
+            Exception deferredException = default(Exception);
+
             // looks like: temp\OpenIIoT.SDK\<Guid>\
             string tempDirectory = Path.Combine(Path.GetTempPath(), System.Reflection.Assembly.GetEntryAssembly().GetName().Name, Guid.NewGuid().ToString());
 
             try
             {
-                OnUpdated($"Extracting package '{Path.GetFileName(packageFile)}' to temp directory '{tempDirectory}'");
+                Verbose($"Extracting package '{Path.GetFileName(packageFile)}' to temp directory '{tempDirectory}'");
                 ZipFile.ExtractToDirectory(packageFile, tempDirectory);
-                OnUpdated(" √ Package extracted successfully.");
+                Verbose("Package extracted successfully.");
 
-                OnUpdated("Checking extracted files...");
+                Verbose("Checking extracted files...");
+                string manifestFilename = Path.Combine(tempDirectory, PackagingConstants.ManifestFilename);
 
-                string manifestFilename = Path.Combine(tempDirectory, Package.Constants.ManifestFilename);
                 if (!File.Exists(manifestFilename))
                 {
                     throw new FileNotFoundException("it does not contain a manifest.");
                 }
 
-                string payloadFilename = Path.Combine(tempDirectory, Package.Constants.PayloadArchiveName);
+                string payloadFilename = Path.Combine(tempDirectory, PackagingConstants.PayloadArchiveName);
+
                 if (!File.Exists(payloadFilename))
                 {
                     throw new FileNotFoundException("it does not contain a payload archive.");
                 }
 
-                OnUpdated(" √ Manifest and Payload Archive extracted successfully.");
-                OnUpdated("Extracting Payload Archive...");
+                Verbose("Manifest and Payload Archive extracted successfully.");
 
-                ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName));
+                Verbose("Extracting Payload Archive...");
+                ZipFile.ExtractToDirectory(payloadFilename, Path.Combine(tempDirectory, PackagingConstants.PayloadDirectoryName));
+                Verbose("Payload Archive extracted successfully.");
 
-                OnUpdated(" √ Payload Archive extracted successfully.");
-                OnUpdated("Checking extracted files...");
-
-                string payloadDirectory = Path.Combine(tempDirectory, Package.Constants.PayloadDirectoryName);
+                Verbose("Checking extracted files...");
+                string payloadDirectory = Path.Combine(tempDirectory, PackagingConstants.PayloadDirectoryName);
 
                 if (Directory.GetFiles(payloadDirectory).Length == 0)
                 {
                     throw new FileNotFoundException("the payload directory does not contain any files.");
                 }
 
-                OnUpdated(" √ Extracted files validated successfully.");
+                Verbose("Extracted files validated successfully.");
 
-                OnUpdated($"Fetching manifest from '{manifestFilename}'...");
+                Verbose($"Fetching manifest from '{manifestFilename}'...");
                 PackageManifest manifest = ReadManifest(manifestFilename);
-                OnUpdated(" √ Manifest fetched successfully.");
+                Verbose("Manifest fetched successfully.");
 
+                string verifiedTrust = string.Empty;
+
+                // verify Trust
                 if (!string.IsNullOrEmpty(manifest.Signature.Trust))
                 {
-                    OnUpdated("Verifying the Manifest Trust...");
+                    Verbose("Verifying the Manifest Trust...");
 
                     if (string.IsNullOrEmpty(manifest.Signature.Digest))
                     {
-                        throw new InvalidDataException("the manifest is trusted but it contains no digest to trust.");
+                        throw new InvalidDataException("the Manifest is Trusted but it contains no Digest to trust.");
                     }
 
                     byte[] trustBytes = Encoding.ASCII.GetBytes(manifest.Signature.Trust);
+                    byte[] verifiedTrustBytes;
 
-                    File.WriteAllBytes(@"C:\pkg\trust.txt", trustBytes);
-                    File.WriteAllText(@"C:\pkg\key.txt", Resources.PGPPublicKey);
+                    try
+                    {
+                        verifiedTrustBytes = PGPSignature.Verify(trustBytes, Resources.PGPPublicKey);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidDataException($"an Exception was thrown while verifying the Trust: {ex.GetType().Name}: {ex.Message}");
+                    }
 
+                    verifiedTrust = Encoding.ASCII.GetString(verifiedTrustBytes);
+
+                    if (manifest.Signature.Digest != verifiedTrust)
+                    {
+                        throw new InvalidDataException("the Manifest Trust is not valid; the Trusted Digest does not match the Digest in the Manifest.");
+                    }
+
+                    Verbose("Trust verified successfully.");
+                }
+
+                // verify Signature. start by determining the public key to use.
+                string publicKey = string.Empty;
+                string verifiedDigest = string.Empty;
+
+                if (!string.IsNullOrEmpty(manifest.Signature.Digest))
+                {
+                    if (!string.IsNullOrEmpty(publicKeyFile))
+                    {
+                        publicKey = File.ReadAllText(publicKeyFile);
+                    }
+                    else
+                    {
+                        publicKey = FetchPublicKeyForUser(manifest.Signature.Subject);
+                    }
+
+                    byte[] digestBytes = Encoding.ASCII.GetBytes(manifest.Signature.Digest);
                     byte[] verifiedDigestBytes;
 
                     try
                     {
-                        verifiedDigestBytes = PGPSignature.Verify(trustBytes, Resources.PGPPublicKey);
+                        verifiedDigestBytes = PGPSignature.Verify(digestBytes, publicKey);
                     }
                     catch (Exception ex)
                     {
-                        throw new InvalidDataException($"an Exception was thrown while verifying the Trust: {ex}");
+                        throw new InvalidDataException($"an Exception was thrown while verifying the Digest: {ex.GetType().Name}: {ex.Message}");
                     }
 
-                    string verifiedDigest = Encoding.ASCII.GetString(verifiedDigestBytes);
+                    verifiedDigest = Encoding.ASCII.GetString(verifiedDigestBytes);
 
-                    if (manifest.Signature.Digest != verifiedDigest)
+                    // remove the digest and trust from the manifest, then serialize it and compare it to the verified digest.
+                    manifest.Signature.Digest = default(string);
+                    manifest.Signature.Trust = default(string);
+
+                    // if the scrubbed manifest and verified digest don't match, something was tampered with.
+                    if (manifest.ToJson() != verifiedDigest)
                     {
-                        throw new InvalidDataException("the manifest trust is not valid.");
+                        throw new InvalidDataException("the Manifest Digest is not valid; the verified Digest does not match the Manifest.");
                     }
 
-                    OnUpdated(" √ Trust verified successfully.");
+                    Verbose("Digest verified successfully.");
                 }
 
-                if (!string.IsNullOrEmpty(manifest.Signature.Digest))
-                {
-                    // TODO: validate signature
-                }
+                // TODO: validate files.
+                Success("Package verified successfully.");
             }
             catch (Exception ex)
             {
-                OnUpdated($"Package '{packageFile}' is invalid: {ex.Message}");
+                deferredException = new Exception($"Package '{packageFile}' is invalid: {ex.Message}");
             }
             finally
             {
-                OnUpdated("Deleting temporary files...");
+                Verbose("Deleting temporary files...");
                 Directory.Delete(tempDirectory, true);
-                OnUpdated(" √ Temporary files deleted successfully.");
+                Verbose("Temporary files deleted successfully.");
+
+                if (deferredException != default(Exception))
+                {
+                    throw deferredException;
+                }
             }
         }
 
@@ -129,11 +240,11 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
         /// <param name="username">The keybase.io username of the user for which the PGP public key is to be fetched..</param>
         /// <returns>The fetched PGP public key.</returns>
         /// <exception cref="WebException">Thrown when an error occurs fetching the key.</exception>
-        public static string FetchPublicKeyForUser(string username)
+        public string FetchPublicKeyForUser(string username)
         {
-            string url = Constants.KeyUrlBase.Replace(Constants.KeyUrlPlaceholder, username);
+            string url = PackagingConstants.KeyUrlBase.Replace(PackagingConstants.KeyUrlPlaceholder, username);
 
-            OnUpdated($"Fetching PGP key information from {url}...");
+            Verbose($"Fetching PGP key information from {url}...");
 
             try
             {
@@ -141,36 +252,33 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
                 {
                     string content = client.DownloadString(url);
 
-                    OnUpdated($"Key information fetched.  Parsing primary public key...");
+                    Verbose($"Key information fetched.  Parsing primary public key...");
 
                     JObject key = JObject.Parse(content);
                     string publicKey = key["them"]["public_keys"]["primary"]["bundle"].ToString();
 
-                    if (publicKey.Length < Constants.KeyMinimumLength)
+                    if (publicKey.Length < PackagingConstants.KeyMinimumLength)
                     {
-                        throw new InvalidDataException($"The length of the retrieved key was not long enough (expected: >= {Constants.KeyMinimumLength}, actual: {publicKey.Length}) to be a valid PGP public key.");
+                        throw new InvalidDataException($"The length of the retrieved key was not long enough (expected: >= {PackagingConstants.KeyMinimumLength}, actual: {publicKey.Length}) to be a valid PGP public key.");
                     }
 
-                    OnUpdated($"Public key fetched successfully.");
+                    Verbose($"Public key fetched successfully.");
 
                     return publicKey;
                 }
             }
             catch (Exception ex)
             {
-                throw new WebException($"Failed to fetch the object from '{url}': {ex.Message}");
+                throw new WebException($"Failed to retrieve the PGP Public Key for the package: '{url}': {ex.Message}");
             }
         }
 
-        private static void OnUpdated(string message)
-        {
-            if (Updated != null)
-            {
-                Updated(null, new PackagingUpdateEventArgs(PackagingOperation.Verify, message));
-            }
-        }
-
-        private static PackageManifest ReadManifest(string manifestFilename)
+        /// <summary>
+        ///     Reads and deserializes the <see cref="PackageManifest"/> contains within the specified file.
+        /// </summary>
+        /// <param name="manifestFilename">the file from which to read and deserialize the Manifest.</param>
+        /// <returns>The deserialized Manifest.</returns>
+        private PackageManifest ReadManifest(string manifestFilename)
         {
             try
             {
@@ -179,29 +287,6 @@ namespace OpenIIoT.SDK.Package.Packaging.Operations
             catch (Exception ex)
             {
                 throw new InvalidDataException($"The contents of manifest file '{manifestFilename}' could not be read and deserialized: {ex.Message}");
-            }
-        }
-
-        private static void ValidatePackageFileArgument(string packageFile)
-        {
-            if (string.IsNullOrEmpty(packageFile))
-            {
-                throw new ArgumentException($"The required argument 'package' (-p|--package) was not supplied.");
-            }
-
-            if (!File.Exists(packageFile))
-            {
-                throw new FileNotFoundException($"The specified package file '{packageFile}' could not be found.");
-            }
-
-            if (new FileInfo(packageFile).Length == 0)
-            {
-                throw new InvalidDataException($"The specified package file '{packageFile}' is empty.");
-            }
-
-            if (!File.OpenRead(packageFile).CanRead)
-            {
-                throw new IOException($"The specified package file '{packageFile}' could not be opened for reading.  It may be open in another process, or you may have insufficient rights.");
             }
         }
 

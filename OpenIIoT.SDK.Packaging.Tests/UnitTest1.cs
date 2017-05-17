@@ -1,14 +1,16 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Xunit;
 
 namespace OpenIIoT.SDK.Packaging.Tests
 {
-    [TestClass]
     public class UnitTest1
     {
-        [TestMethod]
+        #region Public Methods
+
+        [Fact]
         public void TestMethod1()
         {
         }
+
+        #endregion Public Methods
     }
 }
